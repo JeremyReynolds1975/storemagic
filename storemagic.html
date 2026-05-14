@@ -1,0 +1,3029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StoreMagic — AI Shopify Product Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3a;
+    --accent: #7c5cfc;
+    --accent2: #c084fc;
+    --accent3: #38bdf8;
+    --text: #f0f0f8;
+    --muted: #8888aa;
+    --success: #34d399;
+    --error: #f87171;
+    --warning: #fbbf24;
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND MESH ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80vw 60vh at 20% 0%, rgba(124,92,252,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60vw 50vh at 80% 100%, rgba(56,189,248,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 40px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .logo span { color: var(--text); -webkit-text-fill-color: var(--text); opacity: 0.5; font-weight: 400; }
+  .nav-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center;
+    padding: 72px 0 56px;
+  }
+  .hero-tag {
+    display: inline-block;
+    border: 1px solid rgba(124,92,252,0.4);
+    background: rgba(124,92,252,0.08);
+    color: var(--accent2);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2) 80%, var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto 44px;
+    line-height: 1.7;
+  }
+
+  /* ── STEPS INDICATOR ── */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 48px;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .step-dot.active {
+    border-color: var(--accent);
+    background: rgba(124,92,252,0.15);
+    color: var(--accent2);
+  }
+  .step-dot.done {
+    border-color: var(--success);
+    background: rgba(52,211,153,0.1);
+    color: var(--success);
+  }
+  .step-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .step-label.active { color: var(--text); }
+  .step-line {
+    width: 40px;
+    height: 2px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .step-line.done { background: var(--accent); }
+
+  /* ── CARDS / PANELS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-sub {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-bottom: 24px;
+  }
+  .card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(124,92,252,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  /* ── FORM ── */
+  .form-row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.12);
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.6; }
+  select option { background: var(--surface); }
+
+  .input-group {
+    position: relative;
+  }
+  .input-group input {
+    padding-right: 48px;
+  }
+  .input-group .input-suffix {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(124,92,252,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(124,92,252,0.45); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
+
+  .btn-danger {
+    background: rgba(248,113,113,0.1);
+    color: var(--error);
+    border: 1px solid rgba(248,113,113,0.2);
+  }
+  .btn-danger:hover { background: rgba(248,113,113,0.2); }
+
+  .btn-success {
+    background: rgba(52,211,153,0.1);
+    color: var(--success);
+    border: 1px solid rgba(52,211,153,0.25);
+  }
+  .btn-success:hover { background: rgba(52,211,153,0.2); }
+
+  .btn-lg { padding: 16px 36px; font-size: 1rem; border-radius: 14px; }
+  .btn-sm { padding: 8px 16px; font-size: 0.82rem; }
+
+  .btn-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+  /* ── PROGRESS / STATUS ── */
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .status-badge.pending { background: rgba(251,191,36,0.1); color: var(--warning); }
+  .status-badge.running { background: rgba(124,92,252,0.1); color: var(--accent2); }
+  .status-badge.done { background: rgba(52,211,153,0.1); color: var(--success); }
+  .status-badge.error { background: rgba(248,113,113,0.1); color: var(--error); }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.2s infinite;
+  }
+  .status-badge:not(.running) .status-dot { animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── TOAST / ALERT ── */
+  .alert {
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+  }
+  .alert-info { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); color: var(--accent3); }
+  .alert-success { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); color: var(--success); }
+  .alert-error { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: var(--error); }
+  .alert-warn { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: var(--warning); }
+
+  /* ── PRODUCT PREVIEW ── */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .preview-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .preview-content {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    min-height: 80px;
+    white-space: pre-wrap;
+  }
+  .preview-content.html-content { white-space: normal; }
+  .preview-content em { color: var(--muted); font-style: italic; }
+  .preview-tag {
+    display: inline-block;
+    background: rgba(124,92,252,0.12);
+    border: 1px solid rgba(124,92,252,0.25);
+    color: var(--accent2);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 6px;
+    margin: 3px;
+  }
+
+  /* ── PRODUCTS LIST ── */
+  .products-list { display: flex; flex-direction: column; gap: 12px; }
+  .product-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    transition: border-color 0.2s;
+  }
+  .product-row:hover { border-color: rgba(124,92,252,0.3); }
+  .product-row-info { flex: 1; min-width: 0; }
+  .product-row-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .product-row-meta { color: var(--muted); font-size: 0.82rem; display: flex; gap: 12px; }
+  .product-row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  /* ── SECTION TOGGLE ── */
+  .section-page { display: none; }
+  .section-page.active { display: block; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 24px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 9px 20px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── FEATURES GRID ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 48px 0;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .feature-card:hover { border-color: rgba(124,92,252,0.3); transform: translateY(-2px); }
+  .feature-icon { font-size: 2rem; margin-bottom: 14px; }
+  .feature-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  .feature-card p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── SHOPIFY CONNECT SECTION ── */
+  .shopify-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .shopify-badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .shopify-badge.connected .dot { background: var(--success); }
+  .shopify-badge.disconnected .dot { background: var(--error); }
+  .shopify-badge.connected { color: var(--success); }
+  .shopify-badge.disconnected { color: var(--error); }
+
+  /* ── LOG ── */
+  .log-box {
+    background: #0a0a0f;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    max-height: 200px;
+    overflow-y: auto;
+    color: var(--muted);
+  }
+  .log-line { display: block; }
+  .log-line.success { color: var(--success); }
+  .log-line.error { color: var(--error); }
+  .log-line.info { color: var(--accent3); }
+  .log-line.warn { color: var(--warning); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
+    .preview-grid { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr; }
+    .card { padding: 20px; }
+    .hero { padding: 48px 0 36px; }
+  }
+
+  /* ── ANIMATIONS ── */
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    animation: shineMove 3s ease-in-out infinite;
+  }
+  @keyframes shineMove { 0%{left:-100%} 100%{left:200%} }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    max-width: 560px;
+    width: 90%;
+    transform: translateY(20px);
+    transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .modal-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 24px; }
+  .modal-close { float: right; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.3rem; line-height: 1; }
+
+  /* ── AUTH MODAL ── */
+  .auth-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+    gap: 0;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .auth-tab.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent2);
+  }
+  .auth-panel { display: none; }
+  .auth-panel.active { display: block; }
+
+  .auth-input-wrap { margin-bottom: 14px; }
+  .auth-input-wrap label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+  .auth-input-wrap input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .auth-input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.12);
+  }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .auth-footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 18px;
+  }
+  .auth-footer a {
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .auth-footer a:hover { text-decoration: underline; }
+
+  .auth-error {
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.2);
+    color: var(--error);
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .auth-success-msg {
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    color: var(--success);
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .password-strength {
+    margin-top: 6px;
+    height: 3px;
+    border-radius: 99px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .password-strength-bar {
+    height: 100%;
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.3s, background 0.3s;
+  }
+  .strength-weak { background: var(--error); }
+  .strength-ok { background: var(--warning); }
+  .strength-strong { background: var(--success); }
+
+  /* ── USER AVATAR (nav) ── */
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 5px 14px 5px 5px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .user-pill:hover { border-color: var(--accent); }
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .user-name {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--text);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 180px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 200;
+    overflow: hidden;
+    display: none;
+  }
+  .user-dropdown.open { display: block; animation: fadeIn 0.15s ease; }
+  .user-dropdown-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .user-dropdown-email { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .user-dropdown-item:hover { background: var(--surface2); }
+  .user-dropdown-item.danger { color: var(--error); }
+
+  /* ── AUTH GATE OVERLAY on hero CTA ── */
+  .auth-gate-hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+  .auth-gate-hint a {
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ── SOCIAL LOGIN BUTTONS ── */
+  .social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 10px;
+  }
+  .social-btn:hover { border-color: var(--accent); background: rgba(124,92,252,0.05); }
+
+  /* ── TERMS CHECKBOX ── */
+  .terms-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .terms-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    margin-top: 2px;
+    cursor: pointer;
+  }
+  .terms-row a { color: var(--accent2); text-decoration: underline; cursor: pointer; }
+
+  /* ── SETTINGS MODAL ── */
+  .settings-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 160px;
+    border-right: 1px solid var(--border);
+    padding-right: 20px;
+    margin-right: 24px;
+  }
+  .settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    text-align: left;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .settings-nav-item:hover { background: var(--surface2); color: var(--text); }
+  .settings-nav-item.active { background: rgba(124,92,252,0.12); color: var(--accent2); font-weight: 600; }
+  .settings-nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  .settings-panel { display: none; flex: 1; min-width: 0; }
+  .settings-panel.active { display: block; }
+  .settings-panel-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .settings-panel-sub { color: var(--muted); font-size: 0.83rem; margin-bottom: 20px; }
+
+  .settings-field { margin-bottom: 14px; }
+  .settings-field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+  .settings-field input, .settings-field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .settings-field input:focus, .settings-field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.12);
+  }
+  .settings-field .field-hint {
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+  .settings-field .field-hint a { color: var(--accent2); text-decoration: underline; cursor: pointer; }
+
+  .settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .key-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .key-display input { flex: 1; }
+  .key-toggle {
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    cursor: pointer;
+    line-height: 1;
+    transition: border-color 0.2s;
+  }
+  .key-toggle:hover { border-color: var(--accent); color: var(--text); }
+
+  .settings-saved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--success);
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .settings-saved-badge.visible { opacity: 1; }
+
+  .settings-section-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 20px 0 10px;
+  }
+  .settings-section-header:first-child { margin-top: 0; }
+
+  .danger-zone {
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-top: 8px;
+  }
+  .danger-zone-title { font-size: 0.85rem; font-weight: 600; color: var(--error); margin-bottom: 4px; }
+  .danger-zone-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+
+  .connection-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .connection-status-pill.ok { background: rgba(52,211,153,0.1); color: var(--success); border: 1px solid rgba(52,211,153,0.2); }
+  .connection-status-pill.none { background: rgba(136,136,170,0.1); color: var(--muted); border: 1px solid var(--border); }
+  .connection-status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo">Store<span>Magic</span></div>
+  <div id="shopifyStatus" class="shopify-badge disconnected" style="display:none;">
+    <div class="dot"></div>
+    <span>Not connected to Shopify</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <!-- Shown when logged OUT -->
+    <div id="navAuthBtns">
+      <button class="btn btn-secondary btn-sm" onclick="openAuth('login')" style="margin-right:6px;">Log in</button>
+      <button class="btn btn-primary btn-sm" onclick="openAuth('signup')">Sign up free</button>
+    </div>
+    <!-- Shown when logged IN -->
+    <div id="navUserPill" style="display:none; position:relative;">
+      <div class="user-pill" onclick="toggleUserDropdown()">
+        <div class="user-avatar" id="navAvatar">?</div>
+        <div class="user-name" id="navUserName">User</div>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="opacity:0.5;"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-dropdown-header">
+          <div style="font-weight:600; font-size:0.88rem;" id="dropdownName">–</div>
+          <div class="user-dropdown-email" id="dropdownEmail">–</div>
+        </div>
+        <button class="user-dropdown-item" onclick="openSettings('profile'); toggleUserDropdown()">👤 &nbsp;Account Profile</button>
+        <button class="user-dropdown-item" onclick="openSettings('keys'); toggleUserDropdown()">🔑 &nbsp;API Keys &amp; Settings</button>
+        <button class="user-dropdown-item" onclick="openSettings('shopify'); toggleUserDropdown()">🛍️ &nbsp;Shopify Connection</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0;">
+        <button class="user-dropdown-item danger" onclick="logOut()">↩ &nbsp;Sign out</button>
+      </div>
+    </div>
+    <div class="nav-badge">AI Powered</div>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="container">
+
+  <!-- HERO (shown when not started) -->
+  <div id="heroSection">
+    <div class="hero">
+      <div class="hero-tag">✦ AI-Powered Store Builder</div>
+      <h1>Turn any product into a<br/>high-converting Shopify page</h1>
+      <p>Paste a product URL or describe your item. StoreMagic uses Claude AI to write conversion-optimized copy, generate SEO metadata, and push it straight to your Shopify store.</p>
+      <button class="btn btn-primary btn-lg" onclick="requireAuthThenLaunch()">
+        ✦ &nbsp;Launch StoreMagic
+      </button>
+      <p class="auth-gate-hint">Free to start · No credit card required · <a onclick="openAuth('signup')">Create your account</a></p>
+    </div>
+
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>AI Copywriting</h3>
+        <p>Claude generates high-converting product descriptions trained on ecommerce best practices.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3>One-Click Shopify Push</h3>
+        <p>Publish directly to your store via the Shopify Admin API. No copy-pasting, no friction.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌍</div>
+        <h3>SEO + Multilingual</h3>
+        <p>Auto-generates meta titles, descriptions, and tags. Translate to any language instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <h3>Structured Variants</h3>
+        <p>Define sizes, colors, and other variants with smart pricing suggestions.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>Brand Identity</h3>
+        <p>AI picks tone, voice, and positioning to match your niche and target audience.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>Bulk Generation</h3>
+        <p>Generate and push multiple product pages in a single session.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP (shown after launch) -->
+  <div id="appSection" style="display:none; padding: 32px 0 64px;">
+    <!-- Shopify status inside app -->
+    <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+      <div id="shopifyStatusInner" class="shopify-badge disconnected">
+        <div class="dot"></div>
+        <span>Not connected to Shopify</span>
+      </div>
+    </div>
+
+    <!-- STEP INDICATOR -->
+    <div class="steps" id="stepIndicator">
+      <div class="step-item">
+        <div class="step-dot active" id="sd1">1</div>
+        <div class="step-label active" id="sl1">Connect Shopify</div>
+      </div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-item">
+        <div class="step-dot" id="sd2">2</div>
+        <div class="step-label" id="sl2">Product Details</div>
+      </div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-item">
+        <div class="step-dot" id="sd3">3</div>
+        <div class="step-label" id="sl3">AI Generation</div>
+      </div>
+      <div class="step-line" id="line3"></div>
+      <div class="step-item">
+        <div class="step-dot" id="sd4">4</div>
+        <div class="step-label" id="sl4">Review &amp; Publish</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: SHOPIFY CONNECT -->
+    <div id="step1" class="section-page active fade-in">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">🔗</div>
+          Connect Your Shopify Store
+        </div>
+        <div class="card-sub">Enter your store domain and Admin API access token. This stays in your browser — never sent to any server.
+          <span id="connectGreeting"></span>
+        </div>
+
+        <div class="alert alert-info">
+          ℹ️ &nbsp;To get an access token: Shopify Admin → Settings → Apps and sales channels → Develop apps → Create an app → Configure Admin API scopes (<strong>write_products, read_products</strong>) → Install app → Copy API access token.
+          &nbsp;|&nbsp; <strong>Running via proxy?</strong> Open this page at <code>http://localhost:3000</code> after running <code>node server.js</code>.
+        </div>
+
+        <div class="form-row cols-2">
+          <div>
+            <label>Shopify Store Domain</label>
+            <div class="input-group">
+              <input type="text" id="shopDomain" placeholder="your-store" />
+              <span class="input-suffix">.myshopify.com</span>
+            </div>
+          </div>
+          <div>
+            <label>Admin API Access Token</label>
+            <input type="password" id="shopToken" placeholder="shpat_xxxxxxxxxxxxxxxxxx" />
+          </div>
+        </div>
+
+        <div class="form-row cols-2">
+          <div>
+            <label>Anthropic API Key</label>
+            <input type="password" id="anthropicKey" placeholder="sk-ant-xxxxxxxxxxxxxxxxxx" />
+          </div>
+          <div>
+            <label>API Version</label>
+            <select id="apiVersion">
+              <option value="2025-07">2025-07 (latest)</option>
+              <option value="2025-01">2025-01</option>
+              <option value="2024-10">2024-10</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="connectAlert"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="connectBtn" onclick="testShopifyConnection()">
+            Test & Connect
+          </button>
+          <button class="btn btn-secondary" onclick="skipConnection()">
+            Skip — Demo Mode
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: PRODUCT DETAILS -->
+    <div id="step2" class="section-page fade-in">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">📦</div>
+          Product Information
+        </div>
+        <div class="card-sub">Tell the AI about your product. The more detail you provide, the better the output.</div>
+
+        <div class="tabs" id="inputTabs">
+          <button class="tab active" onclick="switchTab('manual')">Manual Entry</button>
+          <button class="tab" onclick="switchTab('url')">From URL</button>
+          <button class="tab" onclick="switchTab('describe')">Describe It</button>
+        </div>
+
+        <!-- MANUAL TAB -->
+        <div id="tab-manual">
+          <div class="form-row">
+            <div>
+              <label>Product Name *</label>
+              <input type="text" id="productName" placeholder="e.g. UltraFoam Wireless Headphones Pro" />
+            </div>
+          </div>
+          <div class="form-row cols-3">
+            <div>
+              <label>Product Type / Category</label>
+              <input type="text" id="productType" placeholder="e.g. Electronics, Skincare" />
+            </div>
+            <div>
+              <label>Brand / Vendor</label>
+              <input type="text" id="productVendor" placeholder="e.g. TechBrand" />
+            </div>
+            <div>
+              <label>Target Audience</label>
+              <input type="text" id="targetAudience" placeholder="e.g. Gamers, Busy Moms" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Key Features / Bullet Points</label>
+              <textarea id="productFeatures" placeholder="List the main features, one per line:&#10;• 40-hour battery life&#10;• Active noise cancellation&#10;• Foldable design"></textarea>
+            </div>
+          </div>
+          <div class="form-row cols-2">
+            <div>
+              <label>Price (USD)</label>
+              <input type="number" id="productPrice" placeholder="49.99" step="0.01" />
+            </div>
+            <div>
+              <label>Compare-at Price (optional)</label>
+              <input type="number" id="comparePrice" placeholder="79.99" step="0.01" />
+            </div>
+          </div>
+          <div class="form-row cols-2">
+            <div>
+              <label>Variants (comma-separated)</label>
+              <input type="text" id="productVariants" placeholder="e.g. Black, White, Blue or S, M, L, XL" />
+            </div>
+            <div>
+              <label>Tags (comma-separated)</label>
+              <input type="text" id="productTags" placeholder="e.g. wireless, premium, gift-idea" />
+            </div>
+          </div>
+          <div class="form-row cols-2">
+            <div>
+              <label>Writing Tone</label>
+              <select id="writingTone">
+                <option value="persuasive and energetic">Persuasive & Energetic</option>
+                <option value="professional and trustworthy">Professional & Trustworthy</option>
+                <option value="friendly and conversational">Friendly & Conversational</option>
+                <option value="luxury and premium">Luxury & Premium</option>
+                <option value="minimalist and clean">Minimalist & Clean</option>
+                <option value="bold and aggressive">Bold & Aggressive</option>
+              </select>
+            </div>
+            <div>
+              <label>Output Language</label>
+              <select id="outputLanguage">
+                <option value="English">English</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Italian">Italian</option>
+                <option value="Portuguese">Portuguese</option>
+                <option value="Dutch">Dutch</option>
+                <option value="Japanese">Japanese</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Additional Context (optional)</label>
+              <textarea id="additionalContext" placeholder="Any extra info: target market, unique selling point, competitors to differentiate from, use cases, etc." style="min-height:70px;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- URL TAB -->
+        <div id="tab-url" style="display:none;">
+          <div class="alert alert-warn">
+            ⚠️ &nbsp;Due to browser security restrictions (CORS), direct URL scraping isn't possible client-side. Paste the product URL below — StoreMagic will extract the domain/slug and use AI to generate a product page based on the URL context. For full scraping, deploy with a server-side proxy.
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Product URL (AliExpress, Amazon, or any Shopify store)</label>
+              <input type="url" id="productUrl" placeholder="https://www.aliexpress.com/item/..." />
+            </div>
+          </div>
+          <div class="form-row cols-2">
+            <div>
+              <label>Price (USD)</label>
+              <input type="number" id="urlProductPrice" placeholder="29.99" step="0.01" />
+            </div>
+            <div>
+              <label>Writing Tone</label>
+              <select id="urlWritingTone">
+                <option value="persuasive and energetic">Persuasive & Energetic</option>
+                <option value="professional and trustworthy">Professional & Trustworthy</option>
+                <option value="friendly and conversational">Friendly & Conversational</option>
+                <option value="luxury and premium">Luxury & Premium</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESCRIBE TAB -->
+        <div id="tab-describe" style="display:none;">
+          <div class="form-row">
+            <div>
+              <label>Describe your product in plain language *</label>
+              <textarea id="productDescription" style="min-height:140px;" placeholder="Describe your product naturally — what it is, who it's for, why it's great. For example: 'I want to sell a portable neck massager targeted at office workers who suffer from tension and stress. It has 3 heat levels, 6 massage modes, and fits around the neck. It's rechargeable and folds flat. The vibe should be premium wellness.'"></textarea>
+            </div>
+          </div>
+          <div class="form-row cols-3">
+            <div>
+              <label>Approx. Price</label>
+              <input type="number" id="describePrice" placeholder="39.99" step="0.01" />
+            </div>
+            <div>
+              <label>Tone</label>
+              <select id="describeTone">
+                <option value="persuasive and energetic">Persuasive & Energetic</option>
+                <option value="professional and trustworthy">Professional & Trustworthy</option>
+                <option value="friendly and conversational">Friendly & Conversational</option>
+                <option value="luxury and premium">Luxury & Premium</option>
+                <option value="minimalist and clean">Minimalist & Clean</option>
+              </select>
+            </div>
+            <div>
+              <label>Language</label>
+              <select id="describeLanguage">
+                <option value="English">English</option>
+                <option value="French">French</option>
+                <option value="Spanish">Spanish</option>
+                <option value="German">German</option>
+                <option value="Portuguese">Portuguese</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+        <div class="btn-group">
+          <button class="btn btn-primary btn-lg" onclick="generateWithAI()" id="generateBtn">
+            ✦ &nbsp;Generate with AI
+          </button>
+          <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: GENERATION PROGRESS -->
+    <div id="step3" class="section-page fade-in">
+      <div class="card shine">
+        <div class="card-title">
+          <div class="card-icon">⚡</div>
+          AI Generating Your Product Page
+        </div>
+        <div class="card-sub">Claude is crafting conversion-optimized copy for your product.</div>
+
+        <div id="generationSteps">
+          <div style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span id="genLabel" style="font-size:0.88rem; color:var(--muted);">Initializing…</span>
+              <span id="genPct" style="font-size:0.88rem; color:var(--accent2); font-weight:600;">0%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" id="genProgress" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="log-box" id="genLog">
+          <span class="log-line info">» StoreMagic AI engine initializing…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: REVIEW & PUBLISH -->
+    <div id="step4" class="section-page fade-in">
+      <div id="generationAlert"></div>
+
+      <!-- GENERATED CONTENT PREVIEW -->
+      <div class="card" id="previewCard">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <div class="card-title" style="margin-bottom:0;">
+            <div class="card-icon">✨</div>
+            Generated Product Page
+          </div>
+          <span class="status-badge done"><div class="status-dot"></div>AI Complete</span>
+        </div>
+        <div class="card-sub">Review and edit before publishing to Shopify.</div>
+
+        <div class="form-row">
+          <div>
+            <label>Product Title</label>
+            <input type="text" id="genTitle" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Product Description (HTML)</label>
+            <textarea id="genBody" style="min-height:200px; font-family:'Courier New',monospace; font-size:0.82rem;"></textarea>
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label>SEO Meta Title</label>
+            <input type="text" id="genMetaTitle" />
+          </div>
+          <div>
+            <label>SEO Meta Description</label>
+            <input type="text" id="genMetaDesc" />
+          </div>
+        </div>
+        <div class="form-row cols-3">
+          <div>
+            <label>Price</label>
+            <input type="number" id="genPrice" step="0.01" />
+          </div>
+          <div>
+            <label>Compare-at Price</label>
+            <input type="number" id="genComparePrice" step="0.01" />
+          </div>
+          <div>
+            <label>Product Type</label>
+            <input type="text" id="genProductType" />
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div>
+            <label>Vendor / Brand</label>
+            <input type="text" id="genVendor" />
+          </div>
+          <div>
+            <label>Tags</label>
+            <input type="text" id="genTags" />
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="preview-grid">
+          <div class="preview-section">
+            <h3>📋 Description Preview</h3>
+            <div class="preview-content html-content" id="descPreview"><em>Loading preview…</em></div>
+          </div>
+          <div class="preview-section">
+            <h3>🏷️ Tags</h3>
+            <div class="preview-content" id="tagsPreview" style="min-height:auto; padding:12px;"><em>No tags yet</em></div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div id="publishAlert"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary btn-lg shine" id="publishBtn" onclick="publishToShopify()">
+            🚀 &nbsp;Publish to Shopify
+          </button>
+          <button class="btn btn-secondary" onclick="publishAsDraft()">
+            Save as Draft
+          </button>
+          <button class="btn btn-secondary" onclick="regenerate()">
+            ↺ &nbsp;Regenerate
+          </button>
+          <button class="btn btn-secondary" onclick="goToStep(2)">
+            ← Back
+          </button>
+        </div>
+      </div>
+
+      <!-- PUBLISHED PRODUCTS LIST -->
+      <div class="card" id="publishedCard" style="display:none;">
+        <div class="card-title">
+          <div class="card-icon">✅</div>
+          Published Products
+        </div>
+        <div class="card-sub">Products pushed to your Shopify store this session.</div>
+        <div class="products-list" id="publishedList"></div>
+        <hr class="divider" />
+        <button class="btn btn-primary" onclick="addAnotherProduct()">+ Add Another Product</button>
+      </div>
+    </div>
+
+  </div><!-- /appSection -->
+</div><!-- /container -->
+
+<!-- ── SETTINGS MODAL ── -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" style="max-width:680px; padding:0; overflow:hidden;">
+
+    <div style="display:flex; min-height:420px;">
+
+      <!-- LEFT NAV -->
+      <div style="background:var(--surface2); padding:24px 20px; display:flex; flex-direction:column; gap:2px; min-width:180px; border-right:1px solid var(--border);">
+        <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:0.85rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; padding:0 12px;">Settings</div>
+        <button class="settings-nav-item active" id="snav-profile" onclick="switchSettingsPanel('profile')"><span class="settings-nav-icon">👤</span>Profile</button>
+        <button class="settings-nav-item" id="snav-keys" onclick="switchSettingsPanel('keys')"><span class="settings-nav-icon">🔑</span>API Keys</button>
+        <button class="settings-nav-item" id="snav-shopify" onclick="switchSettingsPanel('shopify')"><span class="settings-nav-icon">🛍️</span>Shopify</button>
+        <button class="settings-nav-item" id="snav-preferences" onclick="switchSettingsPanel('preferences')"><span class="settings-nav-icon">⚙️</span>Preferences</button>
+        <div style="flex:1;"></div>
+        <button class="settings-nav-item danger" style="color:var(--error);" onclick="closeModal('settingsModal')"><span class="settings-nav-icon">✕</span>Close</button>
+      </div>
+
+      <!-- RIGHT CONTENT -->
+      <div style="flex:1; padding:28px; overflow-y:auto; max-height:560px;">
+
+        <!-- PROFILE PANEL -->
+        <div class="settings-panel active" id="spanel-profile">
+          <div class="settings-panel-title">Account Profile</div>
+          <div class="settings-panel-sub">Update your name and account details.</div>
+          <div class="settings-row">
+            <div class="settings-field">
+              <label>First Name</label>
+              <input type="text" id="set-firstName" placeholder="Jane" />
+            </div>
+            <div class="settings-field">
+              <label>Last Name</label>
+              <input type="text" id="set-lastName" placeholder="Smith" />
+            </div>
+          </div>
+          <div class="settings-field">
+            <label>Email Address</label>
+            <input type="email" id="set-email" placeholder="you@example.com" readonly style="opacity:0.6; cursor:not-allowed;" />
+            <div class="field-hint">Email cannot be changed once set.</div>
+          </div>
+          <div class="settings-field">
+            <label>Member Since</label>
+            <input type="text" id="set-memberSince" readonly style="opacity:0.6; cursor:not-allowed;" />
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+            <button class="btn btn-primary btn-sm" onclick="saveProfileSettings()">Save Profile</button>
+            <span class="settings-saved-badge" id="profileSavedBadge">✓ Saved</span>
+          </div>
+
+          <div class="settings-section-header" style="margin-top:28px;">Change Password</div>
+          <div class="settings-field">
+            <label>Current Password</label>
+            <input type="password" id="set-currentPw" placeholder="Enter current password" />
+          </div>
+          <div class="settings-row">
+            <div class="settings-field">
+              <label>New Password</label>
+              <input type="password" id="set-newPw" placeholder="8+ characters" />
+            </div>
+            <div class="settings-field">
+              <label>Confirm New Password</label>
+              <input type="password" id="set-confirmPw" placeholder="Repeat new password" />
+            </div>
+          </div>
+          <div class="auth-error" id="pwChangeError" style="margin-bottom:10px;"></div>
+          <div class="auth-success-msg" id="pwChangeSuccess" style="margin-bottom:10px;"></div>
+          <button class="btn btn-secondary btn-sm" onclick="changePassword()">Update Password</button>
+        </div>
+
+        <!-- API KEYS PANEL -->
+        <div class="settings-panel" id="spanel-keys">
+          <div class="settings-panel-title">API Keys</div>
+          <div class="settings-panel-sub">Your keys are saved in your browser and never transmitted to any third-party server.</div>
+
+          <div class="settings-section-header">Anthropic (Claude AI)</div>
+          <div class="settings-field">
+            <label>Anthropic API Key</label>
+            <div class="key-display">
+              <input type="password" id="set-anthropicKey" placeholder="sk-ant-api03-…" />
+              <button class="key-toggle" onclick="toggleKeyVisibility('set-anthropicKey', this)" title="Show/hide">👁</button>
+            </div>
+            <div class="field-hint">Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key. Starts with <code>sk-ant-</code>.</div>
+          </div>
+          <div class="settings-field">
+            <label>Claude Model Version</label>
+            <select id="set-claudeModel">
+              <option value="claude-sonnet-4-5">Claude Sonnet 4.5 (Recommended)</option>
+              <option value="claude-opus-4-5">Claude Opus 4.5 (Most Powerful)</option>
+              <option value="claude-haiku-4-5">Claude Haiku 4.5 (Fastest)</option>
+            </select>
+            <div class="field-hint">Sonnet 4 offers the best balance of quality and speed for product copy.</div>
+          </div>
+
+          <div class="settings-section-header">Shopify Admin API</div>
+          <div class="settings-field">
+            <label>Admin API Access Token</label>
+            <div class="key-display">
+              <input type="password" id="set-shopToken" placeholder="shpat_…" />
+              <button class="key-toggle" onclick="toggleKeyVisibility('set-shopToken', this)" title="Show/hide">👁</button>
+            </div>
+            <div class="field-hint">Shopify Admin → Settings → Apps → Develop apps → Create app → Configure scopes: <strong>write_products, read_products</strong> → Install → Copy token.</div>
+          </div>
+          <div class="settings-field">
+            <label>API Version</label>
+            <select id="set-apiVersion">
+              <option value="2025-07">2025-07 (Latest)</option>
+              <option value="2025-01">2025-01</option>
+              <option value="2024-10">2024-10</option>
+            </select>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+            <button class="btn btn-primary btn-sm" onclick="saveKeySettings()">Save API Keys</button>
+            <span class="settings-saved-badge" id="keysSavedBadge">✓ Saved</span>
+          </div>
+        </div>
+
+        <!-- SHOPIFY PANEL -->
+        <div class="settings-panel" id="spanel-shopify">
+          <div class="settings-panel-title">Shopify Connection</div>
+          <div class="settings-panel-sub">Connect your store to publish product pages directly.</div>
+
+          <div id="shopifyConnStatus" class="connection-status-pill none"><div class="dot"></div><span>Not connected</span></div>
+
+          <div class="settings-field">
+            <label>Store Domain</label>
+            <div class="input-group">
+              <input type="text" id="set-shopDomain" placeholder="your-store" />
+              <span class="input-suffix" style="right:14px; top:50%; position:absolute; transform:translateY(-50%); color:var(--muted); font-size:0.82rem;">.myshopify.com</span>
+            </div>
+            <div class="field-hint">Enter just the subdomain — e.g. <strong>my-store</strong> for my-store.myshopify.com</div>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+            <button class="btn btn-primary btn-sm" onclick="testAndSaveShopify()">
+              Test &amp; Save Connection
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="saveShopifySettings()">
+              Save Without Testing
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="clearShopifySettings()">
+              Disconnect
+            </button>
+          </div>
+          <div id="shopifySettingsAlert" style="margin-top:12px;"></div>
+
+          <div class="settings-section-header" style="margin-top:24px;">Default Publish Settings</div>
+          <div class="settings-field">
+            <label>Default Publish Status</label>
+            <select id="set-publishStatus">
+              <option value="active">Active (live immediately)</option>
+              <option value="draft">Draft (review before publishing)</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+            <button class="btn btn-primary btn-sm" onclick="saveShopifySettings()">Save Settings</button>
+            <span class="settings-saved-badge" id="shopifySavedBadge">✓ Saved</span>
+          </div>
+        </div>
+
+        <!-- PREFERENCES PANEL -->
+        <div class="settings-panel" id="spanel-preferences">
+          <div class="settings-panel-title">Preferences</div>
+          <div class="settings-panel-sub">Customise how StoreMagic generates content.</div>
+
+          <div class="settings-section-header">AI Generation Defaults</div>
+          <div class="settings-field">
+            <label>Default Writing Tone</label>
+            <select id="set-defaultTone">
+              <option value="persuasive and energetic">Persuasive &amp; Energetic</option>
+              <option value="professional and trustworthy">Professional &amp; Trustworthy</option>
+              <option value="friendly and conversational">Friendly &amp; Conversational</option>
+              <option value="luxury and premium">Luxury &amp; Premium</option>
+              <option value="minimalist and clean">Minimalist &amp; Clean</option>
+              <option value="bold and aggressive">Bold &amp; Aggressive</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Default Output Language</label>
+            <select id="set-defaultLanguage">
+              <option value="English">English</option>
+              <option value="French">French</option>
+              <option value="German">German</option>
+              <option value="Spanish">Spanish</option>
+              <option value="Italian">Italian</option>
+              <option value="Portuguese">Portuguese</option>
+              <option value="Dutch">Dutch</option>
+              <option value="Japanese">Japanese</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Default Brand / Vendor Name</label>
+            <input type="text" id="set-defaultVendor" placeholder="e.g. MyBrand" />
+            <div class="field-hint">Pre-fills the vendor field on every new product.</div>
+          </div>
+          <div class="settings-field">
+            <label>Default Tags (comma-separated)</label>
+            <input type="text" id="set-defaultTags" placeholder="e.g. dropship, trending, gift-idea" />
+          </div>
+
+          <div class="settings-section-header">Workflow</div>
+          <div class="settings-field">
+            <label>Skip Connection Step on Launch</label>
+            <select id="set-skipConnect">
+              <option value="yes">Yes — go straight to Product Details</option>
+              <option value="no">No — always show connection step</option>
+            </select>
+            <div class="field-hint">Only applies when credentials are already saved.</div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+            <button class="btn btn-primary btn-sm" onclick="savePreferenceSettings()">Save Preferences</button>
+            <span class="settings-saved-badge" id="prefsSavedBadge">✓ Saved</span>
+          </div>
+
+          <div class="settings-section-header" style="margin-top:28px;">Data &amp; Privacy</div>
+          <div class="danger-zone">
+            <div class="danger-zone-title">Clear All Saved Data</div>
+            <div class="danger-zone-desc">Removes all API keys, settings, and your account from this browser. This cannot be undone.</div>
+            <button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear Everything &amp; Log Out</button>
+          </div>
+        </div>
+
+      </div><!-- /right content -->
+    </div><!-- /flex -->
+  </div>
+</div>
+
+<!-- ── AUTH MODAL ── -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('authModal')">×</button>
+
+    <div style="text-align:center; margin-bottom:20px;">
+      <div style="font-size:2rem; margin-bottom:8px;">✦</div>
+      <div class="modal-title" style="font-size:1.5rem;">Welcome to StoreMagic</div>
+      <div class="modal-sub" style="margin-bottom:0;">Your AI Shopify product builder</div>
+    </div>
+
+    <!-- Social login buttons -->
+    <button class="social-btn" onclick="socialLogin('google')">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <button class="social-btn" onclick="socialLogin('github')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      Continue with GitHub
+    </button>
+
+    <div class="auth-divider">or use email</div>
+
+    <!-- TAB SWITCHER -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Log in</button>
+      <button class="auth-tab" id="signupTab" onclick="switchAuthTab('signup')">Create account</button>
+    </div>
+
+    <!-- LOG IN PANEL -->
+    <div class="auth-panel active" id="loginPanel">
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-success-msg" id="loginSuccess"></div>
+      <div class="auth-input-wrap">
+        <label>Email address</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" />
+      </div>
+      <div class="auth-input-wrap">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" onkeydown="if(event.key==='Enter') submitLogin()" />
+      </div>
+      <div style="text-align:right; margin-bottom:16px;">
+        <a style="font-size:0.78rem; color:var(--muted); cursor:pointer;" onclick="showForgotPassword()">Forgot password?</a>
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="submitLogin()">
+        Log in to StoreMagic
+      </button>
+      <div class="auth-footer">Don't have an account? <a onclick="switchAuthTab('signup')">Sign up free</a></div>
+    </div>
+
+    <!-- SIGN UP PANEL -->
+    <div class="auth-panel" id="signupPanel">
+      <div class="auth-error" id="signupError"></div>
+      <div class="auth-success-msg" id="signupSuccess"></div>
+      <div class="form-row cols-2" style="margin-bottom:0;">
+        <div class="auth-input-wrap">
+          <label>First name</label>
+          <input type="text" id="signupFirst" placeholder="Jane" />
+        </div>
+        <div class="auth-input-wrap">
+          <label>Last name</label>
+          <input type="text" id="signupLast" placeholder="Smith" />
+        </div>
+      </div>
+      <div class="auth-input-wrap">
+        <label>Email address</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" />
+      </div>
+      <div class="auth-input-wrap">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="8+ characters" oninput="checkPasswordStrength(this.value)" onkeydown="if(event.key==='Enter') submitSignup()" />
+        <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+        <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;" id="strengthLabel"></div>
+      </div>
+      <div class="terms-row">
+        <input type="checkbox" id="termsCheck" />
+        <label for="termsCheck" style="margin-bottom:0; font-size:0.8rem; color:var(--muted); font-weight:400;">
+          I agree to the <a>Terms of Service</a> and <a>Privacy Policy</a>. I consent to receive occasional product updates by email.
+        </label>
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="submitSignup()">
+        Create free account
+      </button>
+      <div class="auth-footer">Already have an account? <a onclick="switchAuthTab('login')">Log in</a></div>
+    </div>
+
+    <!-- FORGOT PASSWORD PANEL -->
+    <div class="auth-panel" id="forgotPanel">
+      <div style="margin-bottom:18px;">
+        <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:0;" onclick="switchAuthTab('login')">← Back to login</button>
+      </div>
+      <div class="auth-error" id="forgotError"></div>
+      <div class="auth-success-msg" id="forgotSuccess"></div>
+      <div class="auth-input-wrap">
+        <label>Email address</label>
+        <input type="email" id="forgotEmail" placeholder="you@example.com" />
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="submitForgot()">
+        Send reset link
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SUCCESS MODAL ── -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('successModal')">×</button>
+    <div style="font-size:3rem; margin-bottom:16px;">🎉</div>
+    <div class="modal-title">Product Published!</div>
+    <div class="modal-sub" id="successModalBody">Your product has been successfully pushed to your Shopify store.</div>
+    <div id="successModalLink" style="margin-bottom:24px;"></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="addAnotherProduct(); closeModal('successModal')">+ Add Another</button>
+      <button class="btn btn-secondary" onclick="closeModal('successModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  currentStep: 1,
+  shopDomain: '',
+  shopToken: '',
+  anthropicKey: '',
+  apiVersion: '2025-07',
+  demoMode: false,
+  connected: false,
+  generatedData: null,
+  publishedProducts: [],
+  currentTab: 'manual',
+  user: null
+};
+
+// ── AUTH STORAGE (localStorage for persistence) ──
+const DB_KEY = 'storemagic_users';
+const SESSION_KEY = 'storemagic_session';
+const SETTINGS_KEY = 'storemagic_settings';
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY) || '{}'); } catch { return {}; }
+}
+function saveUsers(users) {
+  localStorage.setItem(DB_KEY, JSON.stringify(users));
+}
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
+}
+function saveSession(user) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+}
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+// ── SETTINGS STORAGE ──
+function getSettings(email) {
+  try {
+    const all = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    return all[email] || {};
+  } catch { return {}; }
+}
+function saveSettings(email, patch) {
+  try {
+    const all = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    all[email] = { ...(all[email] || {}), ...patch };
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(all));
+    return all[email];
+  } catch { return {}; }
+}
+function clearSettingsForEmail(email) {
+  try {
+    const all = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    delete all[email];
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(all));
+  } catch {}
+}
+
+// ── INIT: check for existing session ──
+(function initAuth() {
+  const session = getSession();
+  if (session) {
+    state.user = session;
+    renderLoggedIn(session);
+    loadSettingsIntoState(session.email);
+  }
+})();
+
+function loadSettingsIntoState(email) {
+  const s = getSettings(email);
+  if (s.anthropicKey) state.anthropicKey = s.anthropicKey;
+  if (s.shopDomain)   state.shopDomain   = s.shopDomain;
+  if (s.shopToken)    state.shopToken     = s.shopToken;
+  if (s.apiVersion)   state.apiVersion   = s.apiVersion;
+  if (s.claudeModel)  state.claudeModel  = s.claudeModel;
+  if (s.publishStatus) state.publishStatus = s.publishStatus;
+  if (s.defaultTone)  state.defaultTone  = s.defaultTone;
+  if (s.defaultLanguage) state.defaultLanguage = s.defaultLanguage;
+  if (s.defaultVendor) state.defaultVendor = s.defaultVendor;
+  if (s.defaultTags)  state.defaultTags  = s.defaultTags;
+  if (s.skipConnect)  state.skipConnect  = s.skipConnect;
+  if (s.shopDomain && s.shopToken) state.connected = true;
+
+  // Pre-fill the step-1 form fields
+  const sd = document.getElementById('shopDomain');
+  const st = document.getElementById('shopToken');
+  const ak = document.getElementById('anthropicKey');
+  const av = document.getElementById('apiVersion');
+  if (sd && s.shopDomain) sd.value = s.shopDomain;
+  if (st && s.shopToken)  st.value = s.shopToken;
+  if (ak && s.anthropicKey) ak.value = s.anthropicKey;
+  if (av && s.apiVersion) av.value = s.apiVersion;
+
+  // Update Shopify status badge if already connected
+  if (s.shopDomain && s.shopToken) updateShopifyStatus(true, s.shopDomain);
+}
+
+function renderLoggedIn(user) {
+  document.getElementById('navAuthBtns').style.display = 'none';
+  document.getElementById('navUserPill').style.display = 'flex';
+  const initials = ((user.first || '?')[0] + (user.last || '?')[0]).toUpperCase();
+  document.getElementById('navAvatar').textContent = initials;
+  document.getElementById('navUserName').textContent = user.first || user.email.split('@')[0];
+  document.getElementById('dropdownName').textContent = `${user.first} ${user.last}`.trim() || user.email;
+  document.getElementById('dropdownEmail').textContent = user.email;
+}
+
+function renderLoggedOut() {
+  document.getElementById('navAuthBtns').style.display = 'flex';
+  document.getElementById('navUserPill').style.display = 'none';
+}
+
+// ── OPEN / CLOSE AUTH MODAL ──
+function openAuth(tab = 'login') {
+  switchAuthTab(tab);
+  clearAuthErrors();
+  document.getElementById('authModal').classList.add('open');
+}
+
+function switchAuthTab(tab) {
+  ['login','signup','forgot'].forEach(t => {
+    document.getElementById(t + 'Panel').classList.toggle('active', t === tab);
+  });
+  ['loginTab','signupTab'].forEach(el => document.getElementById(el).classList.remove('active'));
+  if (tab === 'login') document.getElementById('loginTab').classList.add('active');
+  if (tab === 'signup') document.getElementById('signupTab').classList.add('active');
+  clearAuthErrors();
+}
+
+function showForgotPassword() {
+  ['login','signup','forgot'].forEach(t => document.getElementById(t+'Panel').classList.remove('active'));
+  document.getElementById('forgotPanel').classList.add('active');
+  ['loginTab','signupTab'].forEach(el => document.getElementById(el).classList.remove('active'));
+}
+
+function clearAuthErrors() {
+  ['loginError','signupError','forgotError'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+  });
+  ['loginSuccess','signupSuccess','forgotSuccess'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+  });
+}
+
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function showAuthSuccess(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── SIGN UP ──
+function submitSignup() {
+  const first = document.getElementById('signupFirst').value.trim();
+  const last = document.getElementById('signupLast').value.trim();
+  const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+  const password = document.getElementById('signupPassword').value;
+  const terms = document.getElementById('termsCheck').checked;
+
+  if (!first || !last) return showAuthError('signupError', 'Please enter your first and last name.');
+  if (!email || !email.includes('@')) return showAuthError('signupError', 'Please enter a valid email address.');
+  if (password.length < 8) return showAuthError('signupError', 'Password must be at least 8 characters.');
+  if (!terms) return showAuthError('signupError', 'Please accept the Terms of Service to continue.');
+
+  const users = getUsers();
+  if (users[email]) return showAuthError('signupError', 'An account with this email already exists. Log in instead.');
+
+  // Hash password (simple, client-side only — not for production secrets)
+  const pwHash = btoa(password + '_sm_salt_2026');
+  const user = { first, last, email, pwHash, createdAt: new Date().toISOString() };
+  users[email] = user;
+  saveUsers(users);
+
+  const sessionUser = { first, last, email, createdAt: user.createdAt };
+  saveSession(sessionUser);
+  state.user = sessionUser;
+
+  showAuthSuccess('signupSuccess', `Welcome, ${first}! Account created. Launching StoreMagic…`);
+  setTimeout(() => {
+    closeModal('authModal');
+    renderLoggedIn(sessionUser);
+    showApp();
+  }, 900);
+}
+
+// ── LOG IN ──
+function submitLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!email) return showAuthError('loginError', 'Please enter your email address.');
+  if (!password) return showAuthError('loginError', 'Please enter your password.');
+
+  const users = getUsers();
+  const user = users[email];
+  if (!user) return showAuthError('loginError', 'No account found with that email. Sign up instead.');
+
+  const pwHash = btoa(password + '_sm_salt_2026');
+  if (pwHash !== user.pwHash) return showAuthError('loginError', 'Incorrect password. Please try again.');
+
+  const sessionUser = { first: user.first, last: user.last, email: user.email, createdAt: user.createdAt };
+  saveSession(sessionUser);
+  state.user = sessionUser;
+
+  showAuthSuccess('loginSuccess', `Welcome back, ${user.first}!`);
+  setTimeout(() => {
+    closeModal('authModal');
+    renderLoggedIn(sessionUser);
+    // If they were trying to launch, do so now
+    if (state._pendingLaunch) { state._pendingLaunch = false; showApp(); }
+  }, 700);
+}
+
+// ── FORGOT PASSWORD ──
+function submitForgot() {
+  const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) return showAuthError('forgotError', 'Please enter a valid email address.');
+  // In a real app this would send a reset email via backend
+  showAuthSuccess('forgotSuccess', `If an account exists for ${email}, a reset link has been sent. (Demo: no email sent — accounts are stored locally.)`);
+}
+
+// ── SOCIAL LOGIN (simulated) ──
+function socialLogin(provider) {
+  const fakeName = provider === 'google' ? 'Google User' : 'GitHub User';
+  const fakeEmail = `${provider}_user_${Math.floor(Math.random()*9999)}@${provider}.com`;
+  const sessionUser = { first: fakeName.split(' ')[0], last: fakeName.split(' ')[1], email: fakeEmail, createdAt: new Date().toISOString() };
+  saveSession(sessionUser);
+  state.user = sessionUser;
+  showAuthSuccess('loginSuccess', `Signing in with ${provider.charAt(0).toUpperCase()+provider.slice(1)}…`);
+  setTimeout(() => {
+    closeModal('authModal');
+    renderLoggedIn(sessionUser);
+    if (state._pendingLaunch) { state._pendingLaunch = false; showApp(); }
+  }, 800);
+}
+
+// ── LOG OUT ──
+function logOut() {
+  clearSession();
+  state.user = null;
+  state.shopDomain = '';
+  state.shopToken = '';
+  state.anthropicKey = '';
+  state.connected = false;
+  renderLoggedOut();
+  document.getElementById('appSection').style.display = 'none';
+  document.getElementById('heroSection').style.display = 'block';
+  toggleUserDropdown(false);
+}
+
+// ── SETTINGS MODAL ──
+function openSettings(panel = 'profile') {
+  switchSettingsPanel(panel);
+  populateSettingsForms();
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function switchSettingsPanel(panel) {
+  ['profile','keys','shopify','preferences'].forEach(p => {
+    document.getElementById('spanel-' + p).classList.toggle('active', p === panel);
+    document.getElementById('snav-' + p).classList.toggle('active', p === panel);
+  });
+}
+
+function populateSettingsForms() {
+  if (!state.user) return;
+  const s = getSettings(state.user.email);
+
+  // Profile
+  document.getElementById('set-firstName').value   = state.user.first || '';
+  document.getElementById('set-lastName').value    = state.user.last  || '';
+  document.getElementById('set-email').value       = state.user.email || '';
+  document.getElementById('set-memberSince').value = state.user.createdAt
+    ? new Date(state.user.createdAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
+    : '—';
+
+  // API Keys
+  document.getElementById('set-anthropicKey').value = s.anthropicKey || '';
+  document.getElementById('set-claudeModel').value  = s.claudeModel  || 'claude-sonnet-4-5';
+  document.getElementById('set-shopToken').value    = s.shopToken     || '';
+  document.getElementById('set-apiVersion').value   = s.apiVersion   || '2025-07';
+
+  // Shopify
+  document.getElementById('set-shopDomain').value  = s.shopDomain    || '';
+  document.getElementById('set-publishStatus').value = s.publishStatus || 'active';
+  updateShopifyConnStatusBadge(s.shopDomain && s.shopToken);
+
+  // Preferences
+  document.getElementById('set-defaultTone').value     = s.defaultTone     || 'persuasive and energetic';
+  document.getElementById('set-defaultLanguage').value = s.defaultLanguage  || 'English';
+  document.getElementById('set-defaultVendor').value   = s.defaultVendor   || '';
+  document.getElementById('set-defaultTags').value     = s.defaultTags     || '';
+  document.getElementById('set-skipConnect').value     = s.skipConnect     || 'yes';
+}
+
+function updateShopifyConnStatusBadge(connected) {
+  const el = document.getElementById('shopifyConnStatus');
+  if (!el) return;
+  if (connected) {
+    el.className = 'connection-status-pill ok';
+    const domain = document.getElementById('set-shopDomain').value.trim() || state.shopDomain;
+    el.innerHTML = `<div class="dot"></div><span>Connected — ${domain}.myshopify.com</span>`;
+  } else {
+    el.className = 'connection-status-pill none';
+    el.innerHTML = `<div class="dot"></div><span>Not connected</span>`;
+  }
+}
+
+function flashSaved(badgeId) {
+  const el = document.getElementById(badgeId);
+  if (!el) return;
+  el.classList.add('visible');
+  setTimeout(() => el.classList.remove('visible'), 2500);
+}
+
+// ── SAVE PROFILE ──
+function saveProfileSettings() {
+  if (!state.user) return;
+  const first = document.getElementById('set-firstName').value.trim();
+  const last  = document.getElementById('set-lastName').value.trim();
+  if (!first) return alert('Please enter your first name.');
+
+  // Update user record
+  const users = getUsers();
+  if (users[state.user.email]) {
+    users[state.user.email].first = first;
+    users[state.user.email].last  = last;
+    saveUsers(users);
+  }
+  state.user.first = first;
+  state.user.last  = last;
+  saveSession(state.user);
+  renderLoggedIn(state.user);
+  flashSaved('profileSavedBadge');
+}
+
+// ── CHANGE PASSWORD ──
+function changePassword() {
+  if (!state.user) return;
+  const current  = document.getElementById('set-currentPw').value;
+  const newPw    = document.getElementById('set-newPw').value;
+  const confirm  = document.getElementById('set-confirmPw').value;
+  const errEl    = document.getElementById('pwChangeError');
+  const okEl     = document.getElementById('pwChangeSuccess');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+
+  const users = getUsers();
+  const user  = users[state.user.email];
+  if (!user) return;
+  const currentHash = btoa(current + '_sm_salt_2026');
+  if (currentHash !== user.pwHash) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
+  if (newPw.length < 8) { errEl.textContent = 'New password must be at least 8 characters.'; errEl.style.display = 'block'; return; }
+  if (newPw !== confirm) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = 'block'; return; }
+
+  users[state.user.email].pwHash = btoa(newPw + '_sm_salt_2026');
+  saveUsers(users);
+  document.getElementById('set-currentPw').value = '';
+  document.getElementById('set-newPw').value = '';
+  document.getElementById('set-confirmPw').value = '';
+  okEl.textContent = 'Password updated successfully.';
+  okEl.style.display = 'block';
+}
+
+// ── SAVE API KEYS ──
+function saveKeySettings() {
+  if (!state.user) return;
+  const anthropicKey = document.getElementById('set-anthropicKey').value.trim();
+  const claudeModel  = document.getElementById('set-claudeModel').value;
+  const shopToken    = document.getElementById('set-shopToken').value.trim();
+  const apiVersion   = document.getElementById('set-apiVersion').value;
+
+  saveSettings(state.user.email, { anthropicKey, claudeModel, shopToken, apiVersion });
+
+  // Push into live state and step-1 fields
+  state.anthropicKey = anthropicKey;
+  state.claudeModel  = claudeModel;
+  state.shopToken    = shopToken;
+  state.apiVersion   = apiVersion;
+  const akEl = document.getElementById('anthropicKey');
+  const stEl = document.getElementById('shopToken');
+  const avEl = document.getElementById('apiVersion');
+  if (akEl) akEl.value = anthropicKey;
+  if (stEl) stEl.value = shopToken;
+  if (avEl) avEl.value = apiVersion;
+
+  flashSaved('keysSavedBadge');
+}
+
+// ── SAVE SHOPIFY ──
+function saveShopifySettings() {
+  if (!state.user) return;
+  const shopDomain   = document.getElementById('set-shopDomain').value.trim();
+  const publishStatus = document.getElementById('set-publishStatus').value;
+  const shopToken    = document.getElementById('set-shopToken').value.trim() || state.shopToken;
+
+  saveSettings(state.user.email, { shopDomain, publishStatus, shopToken });
+  state.shopDomain = shopDomain;
+  state.publishStatus = publishStatus;
+
+  const sdEl = document.getElementById('shopDomain');
+  if (sdEl) sdEl.value = shopDomain;
+
+  if (shopDomain && shopToken) {
+    state.connected = true;
+    updateShopifyStatus(true, shopDomain);
+  }
+  updateShopifyConnStatusBadge(shopDomain && shopToken);
+  flashSaved('shopifySavedBadge');
+}
+
+async function testAndSaveShopify() {
+  const domain  = document.getElementById('set-shopDomain').value.trim();
+  const token   = (document.getElementById('set-shopToken').value.trim()) || state.shopToken;
+  const version = (document.getElementById('set-apiVersion').value) || state.apiVersion || '2025-07';
+  const alertEl = document.getElementById('shopifySettingsAlert');
+
+  if (!domain) { alertEl.innerHTML = '<div class="alert alert-error">Please enter your store domain.</div>'; return; }
+  if (!token)  { alertEl.innerHTML = '<div class="alert alert-error">Please save an API token in the API Keys tab first.</div>'; return; }
+
+  alertEl.innerHTML = '<div class="alert alert-info"><span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> &nbsp;Testing connection…</div>';
+
+  try {
+    const resp = await shopifyFetch(`products/count.json`, {}, domain, token, version);
+    if (resp.ok) {
+      const data = await resp.json();
+      saveSettings(state.user.email, { shopDomain: domain, shopToken: token, apiVersion: version });
+      state.shopDomain = domain; state.shopToken = token; state.apiVersion = version; state.connected = true;
+      updateShopifyStatus(true, domain);
+      updateShopifyConnStatusBadge(true);
+      const sdEl = document.getElementById('shopDomain'); if (sdEl) sdEl.value = domain;
+      alertEl.innerHTML = `<div class="alert alert-success">✓ Connected to ${domain}.myshopify.com — ${data.count} products in store.</div>`;
+      flashSaved('shopifySavedBadge');
+    } else {
+      alertEl.innerHTML = `<div class="alert alert-error">Connection failed (HTTP ${resp.status}). Check your domain and token scopes.</div>`;
+    }
+  } catch (err) {
+    alertEl.innerHTML = `<div class="alert alert-error">Connection error: ${err.message}. Make sure the proxy server is running (node server.js).</div>`;
+  }
+}
+
+function clearShopifySettings() {
+  if (!confirm('Disconnect your Shopify store? Your API token will be removed from saved settings.')) return;
+  if (state.user) saveSettings(state.user.email, { shopDomain: '', shopToken: '' });
+  state.shopDomain = ''; state.shopToken = ''; state.connected = false;
+  const sdEl = document.getElementById('shopDomain'); if (sdEl) sdEl.value = '';
+  const stkEl = document.getElementById('set-shopDomain'); if (stkEl) stkEl.value = '';
+  updateShopifyStatus(false, null);
+  updateShopifyConnStatusBadge(false);
+  document.getElementById('shopifySettingsAlert').innerHTML = '<div class="alert alert-success">✓ Shopify disconnected.</div>';
+}
+
+// ── SAVE PREFERENCES ──
+function savePreferenceSettings() {
+  if (!state.user) return;
+  const defaultTone     = document.getElementById('set-defaultTone').value;
+  const defaultLanguage = document.getElementById('set-defaultLanguage').value;
+  const defaultVendor   = document.getElementById('set-defaultVendor').value.trim();
+  const defaultTags     = document.getElementById('set-defaultTags').value.trim();
+  const skipConnect     = document.getElementById('set-skipConnect').value;
+
+  saveSettings(state.user.email, { defaultTone, defaultLanguage, defaultVendor, defaultTags, skipConnect });
+  state.defaultTone = defaultTone;
+  state.defaultLanguage = defaultLanguage;
+  state.defaultVendor = defaultVendor;
+  state.defaultTags = defaultTags;
+  state.skipConnect = skipConnect;
+
+  // Apply defaults to the product form if visible
+  const toneEl = document.getElementById('writingTone');
+  const langEl = document.getElementById('outputLanguage');
+  const vendorEl = document.getElementById('productVendor');
+  const tagsEl = document.getElementById('productTags');
+  if (toneEl && defaultTone) toneEl.value = defaultTone;
+  if (langEl && defaultLanguage) langEl.value = defaultLanguage;
+  if (vendorEl && defaultVendor) vendorEl.value = defaultVendor;
+  if (tagsEl && defaultTags) tagsEl.value = defaultTags;
+
+  flashSaved('prefsSavedBadge');
+}
+
+// ── CLEAR ALL DATA ──
+function clearAllData() {
+  if (!confirm('This will permanently delete your account, all API keys, and settings from this browser. Are you sure?')) return;
+  localStorage.removeItem(DB_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SETTINGS_KEY);
+  location.reload();
+}
+
+// ── KEY VISIBILITY TOGGLE ──
+function toggleKeyVisibility(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+  else { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+// ── CLOSE SETTINGS ON BACKDROP ──
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('settingsModal');
+});
+
+// ── USER DROPDOWN ──
+function toggleUserDropdown(force) {
+  const dd = document.getElementById('userDropdown');
+  const open = force !== undefined ? force : !dd.classList.contains('open');
+  dd.classList.toggle('open', open);
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#navUserPill')) toggleUserDropdown(false);
+});
+
+// ── PASSWORD STRENGTH ──
+function checkPasswordStrength(val) {
+  const bar = document.getElementById('strengthBar');
+  const lbl = document.getElementById('strengthLabel');
+  if (!val) { bar.style.width = '0'; lbl.textContent = ''; return; }
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { w: '25%', cls: 'strength-weak', txt: 'Weak' },
+    { w: '50%', cls: 'strength-weak', txt: 'Fair' },
+    { w: '75%', cls: 'strength-ok', txt: 'Good' },
+    { w: '100%', cls: 'strength-strong', txt: 'Strong ✓' }
+  ];
+  const level = levels[Math.max(0, score - 1)];
+  bar.style.width = level.w;
+  bar.className = 'password-strength-bar ' + level.cls;
+  lbl.textContent = level.txt;
+  lbl.style.color = score >= 3 ? 'var(--success)' : score >= 2 ? 'var(--warning)' : 'var(--error)';
+}
+
+// ── GATE: require auth before launching ──
+function requireAuthThenLaunch() {
+  if (state.user) {
+    showApp();
+  } else {
+    state._pendingLaunch = true;
+    openAuth('signup');
+  }
+}
+
+// ── NAVIGATION ──
+function showApp() {
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('appSection').style.display = 'block';
+
+  if (state.user) {
+    const greet = document.getElementById('connectGreeting');
+    if (greet) greet.innerHTML = ` &nbsp;👋 Welcome, <strong>${state.user.first}</strong>!`;
+
+    const s = getSettings(state.user.email);
+
+    // Apply preference defaults to product form
+    if (s.defaultTone)     { const el = document.getElementById('writingTone');    if (el) el.value = s.defaultTone; }
+    if (s.defaultLanguage) { const el = document.getElementById('outputLanguage'); if (el) el.value = s.defaultLanguage; }
+    if (s.defaultVendor)   { const el = document.getElementById('productVendor');  if (el) el.value = s.defaultVendor; }
+    if (s.defaultTags)     { const el = document.getElementById('productTags');    if (el) el.value = s.defaultTags; }
+
+    // Skip step 1 if credentials are saved and user preference allows it
+    const hasCredentials = s.shopDomain && s.shopToken && s.anthropicKey;
+    const shouldSkip = (s.skipConnect || 'yes') === 'yes';
+    if (hasCredentials && shouldSkip) {
+      goToStep(2);
+      return;
+    }
+  }
+  goToStep(1);
+}
+
+function goToStep(n) {
+  document.querySelectorAll('.section-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  document.getElementById('step' + n).classList.add('fade-in');
+  state.currentStep = n;
+  updateStepUI();
+}
+
+function updateStepUI() {
+  const n = state.currentStep;
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('sd' + i);
+    const lbl = document.getElementById('sl' + i);
+    dot.className = 'step-dot';
+    lbl.className = 'step-label';
+    if (i < n) { dot.classList.add('done'); dot.innerHTML = '✓'; }
+    else if (i === n) { dot.classList.add('active'); lbl.classList.add('active'); }
+    if (i < 4) {
+      const line = document.getElementById('line' + i);
+      line.className = 'step-line' + (i < n ? ' done' : '');
+    }
+  }
+}
+
+function switchTab(tab) {
+  ['manual','url','describe'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#inputTabs .tab').forEach((el, i) => {
+    el.classList.toggle('active', ['manual','url','describe'][i] === tab);
+  });
+  state.currentTab = tab;
+}
+
+// ── SHOPIFY FETCH HELPER ──
+// Automatically routes through the local proxy server when available,
+// falling back gracefully if not (e.g. when opening the HTML file directly).
+// Works on localhost (port included) and any deployed host (no port needed)
+const PROXY_BASE = window.location.port
+  ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}`
+  : `${window.location.protocol}//${window.location.hostname}`;
+let _proxyAvailable = null; // null = unknown, true/false = tested
+
+async function shopifyFetch(shopifyPath, options = {}, domain, token, version) {
+  domain  = domain  || state.shopDomain;
+  token   = token   || state.shopToken;
+  version = version || state.apiVersion || '2025-07';
+
+  // Check proxy availability once per session
+  if (_proxyAvailable === null) {
+    try {
+      const check = await fetch(`${PROXY_BASE}/health`, { signal: AbortSignal.timeout(1500) });
+      _proxyAvailable = check.ok;
+    } catch {
+      _proxyAvailable = false;
+    }
+  }
+
+  if (_proxyAvailable) {
+    // Route through proxy — no CORS issues
+    return fetch(`${PROXY_BASE}/shopify/${shopifyPath}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shop-Domain': domain,
+        'X-Shopify-Access-Token': token,
+        'X-Api-Version': version,
+        ...(options.headers || {})
+      }
+    });
+  } else {
+    // No proxy — attempt direct (will fail with CORS on Shopify endpoints)
+    throw new Error(
+      'Proxy server not running. Start it with: node server.js — then open http://localhost:3000'
+    );
+  }
+}
+
+// ── SHOPIFY CONNECT ──
+async function testShopifyConnection() {
+  const domain = document.getElementById('shopDomain').value.trim();
+  const token = document.getElementById('shopToken').value.trim();
+  const key = document.getElementById('anthropicKey').value.trim();
+  const version = document.getElementById('apiVersion').value;
+
+  if (!domain || !token) {
+    showAlert('connectAlert', 'error', 'Please enter your Shopify store domain and access token.');
+    return;
+  }
+  if (!key) {
+    showAlert('connectAlert', 'warn', 'No Anthropic API key entered. You can still connect to Shopify but AI generation will fail.');
+  }
+
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Testing connection…';
+  clearAlert('connectAlert');
+
+  try {
+    const resp = await shopifyFetch(`products/count.json`, {}, domain, token, version);
+
+    if (resp.ok) {
+      const data = await resp.json();
+      state.shopDomain = domain;
+      state.shopToken = token;
+      state.anthropicKey = key;
+      state.apiVersion = version;
+      state.connected = true;
+      state.demoMode = false;
+
+      if (state.user) saveSettings(state.user.email, { shopDomain: domain, shopToken: token, anthropicKey: key, apiVersion: version });
+
+      updateShopifyStatus(true, domain);
+      showAlert('connectAlert', 'success', `✓ Connected to ${domain}.myshopify.com — ${data.count} products found.`);
+      setTimeout(() => goToStep(2), 800);
+    } else {
+      const errData = await resp.json().catch(() => ({}));
+      const msg = errData.errors || `HTTP ${resp.status} — check your domain and token, and ensure the app has write_products scope.`;
+      showAlert('connectAlert', 'error', `Connection failed: ${msg}`);
+    }
+  } catch (err) {
+    showAlert('connectAlert', 'error', `Connection error: ${err.message}. Make sure the proxy server is running (node server.js) and try again.`);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Test & Connect';
+}
+
+function skipConnection() {
+  state.demoMode = true;
+  state.connected = false;
+  state.anthropicKey = document.getElementById('anthropicKey').value.trim();
+  updateShopifyStatus(false, null);
+  goToStep(2);
+}
+
+function updateShopifyStatus(ok, domain) {
+  const el = document.getElementById('shopifyStatusInner');
+  if (!el) return;
+  if (ok) {
+    el.className = 'shopify-badge connected';
+    el.innerHTML = `<div class="dot"></div><span>${domain}.myshopify.com</span>`;
+  } else {
+    el.className = 'shopify-badge disconnected';
+    el.innerHTML = `<div class="dot"></div><span>Demo Mode</span>`;
+  }
+}
+
+// ── AI GENERATION ──
+async function generateWithAI() {
+  const input = collectInput();
+  if (!input) return;
+
+  const anthropicKey = state.anthropicKey || document.getElementById('anthropicKey').value.trim();
+  if (!anthropicKey) {
+    alert('Please enter your Anthropic API key in the Connect step.');
+    goToStep(1);
+    return;
+  }
+  state.anthropicKey = anthropicKey;
+
+  goToStep(3);
+  await runGeneration(input);
+}
+
+function collectInput() {
+  const tab = state.currentTab;
+  if (tab === 'manual') {
+    const name = document.getElementById('productName').value.trim();
+    if (!name) { alert('Please enter a product name.'); return null; }
+    return {
+      mode: 'manual',
+      name,
+      type: document.getElementById('productType').value.trim(),
+      vendor: document.getElementById('productVendor').value.trim(),
+      audience: document.getElementById('targetAudience').value.trim(),
+      features: document.getElementById('productFeatures').value.trim(),
+      price: document.getElementById('productPrice').value.trim(),
+      comparePrice: document.getElementById('comparePrice').value.trim(),
+      variants: document.getElementById('productVariants').value.trim(),
+      tags: document.getElementById('productTags').value.trim(),
+      tone: document.getElementById('writingTone').value,
+      language: document.getElementById('outputLanguage').value,
+      context: document.getElementById('additionalContext').value.trim()
+    };
+  } else if (tab === 'url') {
+    const url = document.getElementById('productUrl').value.trim();
+    if (!url) { alert('Please enter a product URL.'); return null; }
+    return {
+      mode: 'url',
+      url,
+      price: document.getElementById('urlProductPrice').value.trim(),
+      tone: document.getElementById('urlWritingTone').value
+    };
+  } else {
+    const desc = document.getElementById('productDescription').value.trim();
+    if (!desc) { alert('Please describe your product.'); return null; }
+    return {
+      mode: 'describe',
+      description: desc,
+      price: document.getElementById('describePrice').value.trim(),
+      tone: document.getElementById('describeTone').value,
+      language: document.getElementById('describeLanguage').value
+    };
+  }
+}
+
+async function runGeneration(input) {
+  const steps = [
+    { pct: 10, label: 'Analyzing product context…' },
+    { pct: 30, label: 'Crafting conversion copy…' },
+    { pct: 55, label: 'Writing SEO metadata…' },
+    { pct: 75, label: 'Generating tags & variants…' },
+    { pct: 90, label: 'Finalizing product page…' },
+    { pct: 100, label: 'Complete!' }
+  ];
+
+  const logEl = document.getElementById('genLog');
+
+  function log(msg, type = '') {
+    const line = document.createElement('span');
+    line.className = 'log-line' + (type ? ' ' + type : '');
+    line.textContent = '» ' + msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function setProgress(pct, label) {
+    document.getElementById('genProgress').style.width = pct + '%';
+    document.getElementById('genPct').textContent = pct + '%';
+    document.getElementById('genLabel').textContent = label;
+  }
+
+  // animate a few steps before API call
+  setProgress(10, steps[0].label);
+  log(steps[0].label, 'info');
+  await delay(400);
+  setProgress(25, 'Building AI prompt…');
+  log('Constructing expert ecommerce prompt…', 'info');
+  await delay(400);
+
+  const prompt = buildPrompt(input);
+
+  try {
+    log('Calling Claude API…', 'info');
+    setProgress(35, 'Claude is writing your copy…');
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': state.anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: state.claudeModel || 'claude-sonnet-4-5',
+        max_tokens: 2500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    const rawText = data.content?.[0]?.text || '';
+
+    log('Response received, parsing…', 'info');
+    setProgress(80, 'Parsing AI response…');
+    await delay(300);
+
+    const parsed = parseAIResponse(rawText, input);
+    state.generatedData = parsed;
+
+    setProgress(95, 'Building preview…');
+    log('Populating product fields…', 'success');
+    await delay(300);
+
+    populateStep4(parsed);
+
+    setProgress(100, 'Complete!');
+    log('Product page generated successfully!', 'success');
+    await delay(600);
+
+    goToStep(4);
+
+  } catch (err) {
+    log('Error: ' + err.message, 'error');
+    setProgress(0, 'Generation failed');
+    await delay(500);
+    showAlert('generationAlert', 'error', `AI generation failed: ${err.message}. Check your Anthropic API key.`);
+    goToStep(4);
+    document.getElementById('previewCard').style.display = 'none';
+  }
+}
+
+function buildPrompt(input) {
+  let context = '';
+
+  if (input.mode === 'manual') {
+    context = `
+Product Name: ${input.name}
+Product Type/Category: ${input.type || 'Not specified'}
+Vendor/Brand: ${input.vendor || 'Not specified'}
+Target Audience: ${input.audience || 'General consumers'}
+Key Features: ${input.features || 'Not specified'}
+Price: $${input.price || 'TBD'}
+Compare-at Price: $${input.comparePrice || 'N/A'}
+Variants: ${input.variants || 'None'}
+Existing Tags: ${input.tags || 'None'}
+Tone: ${input.tone}
+Language: ${input.language}
+Additional Context: ${input.context || 'None'}`;
+  } else if (input.mode === 'url') {
+    context = `
+Product URL: ${input.url}
+Price: $${input.price || 'TBD'}
+Tone: ${input.tone}
+(Infer product name, type, features, and benefits from the URL context and common knowledge about this type of product)`;
+  } else {
+    context = `
+Product Description by User: ${input.description}
+Price: $${input.price || 'TBD'}
+Tone: ${input.tone}
+Language: ${input.language}`;
+  }
+
+  return `You are an expert ecommerce copywriter specializing in high-converting Shopify product pages. You write copy that is compelling, benefit-focused, and drives purchases.
+
+Given the following product information:
+${context}
+
+Generate a complete Shopify product page. Respond ONLY with a valid JSON object (no markdown, no code fences, no preamble). The JSON must have exactly these fields:
+
+{
+  "title": "Compelling product title (max 80 chars)",
+  "vendor": "Brand/vendor name",
+  "product_type": "Product category",
+  "body_html": "Full HTML product description — 4-6 paragraphs with h2/h3 subheadings, benefit-focused bullet lists using <ul><li>, social proof language, urgency. Make it compelling. Include sections: hook headline, key benefits, product features, who it's for, guarantee/trust signal.",
+  "seo_title": "SEO meta title (max 70 chars, include primary keyword)",
+  "seo_description": "SEO meta description (max 160 chars, compelling, includes CTA)",
+  "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8"],
+  "price": "numeric price as string e.g. 49.99",
+  "compare_at_price": "numeric compare-at price or null",
+  "variants": ["variant1","variant2"],
+  "short_description": "2-sentence punchy product hook for above-the-fold placement",
+  "key_benefits": ["benefit 1","benefit 2","benefit 3","benefit 4","benefit 5"]
+}
+
+Write all copy in ${input.language || 'English'} with a ${input.tone || 'persuasive'} tone. Make the body_html genuinely compelling — not generic. Focus on transformation and outcomes, not just features.`;
+}
+
+function parseAIResponse(raw, input) {
+  try {
+    // Clean up any accidental markdown fences
+    let json = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    return JSON.parse(json);
+  } catch(e) {
+    // Attempt to extract JSON from text
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch(e2) {}
+    }
+    // Fallback
+    return {
+      title: input.name || 'Untitled Product',
+      vendor: input.vendor || '',
+      product_type: input.type || '',
+      body_html: `<p>${raw}</p>`,
+      seo_title: input.name || 'Product',
+      seo_description: 'Shop now for this amazing product.',
+      tags: (input.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+      price: input.price || '0.00',
+      compare_at_price: input.comparePrice || null,
+      variants: (input.variants || '').split(',').map(v => v.trim()).filter(Boolean),
+      short_description: 'Quality product.',
+      key_benefits: []
+    };
+  }
+}
+
+function populateStep4(d) {
+  document.getElementById('genTitle').value = d.title || '';
+  document.getElementById('genBody').value = d.body_html || '';
+  document.getElementById('genMetaTitle').value = d.seo_title || '';
+  document.getElementById('genMetaDesc').value = d.seo_description || '';
+  document.getElementById('genPrice').value = d.price || '';
+  document.getElementById('genComparePrice').value = d.compare_at_price || '';
+  document.getElementById('genProductType').value = d.product_type || '';
+  document.getElementById('genVendor').value = d.vendor || '';
+  const tags = Array.isArray(d.tags) ? d.tags.join(', ') : (d.tags || '');
+  document.getElementById('genTags').value = tags;
+
+  // Live preview
+  document.getElementById('descPreview').innerHTML = d.body_html || '<em>No content</em>';
+
+  const tagsPreview = document.getElementById('tagsPreview');
+  if (tags) {
+    tagsPreview.innerHTML = tags.split(',').map(t => `<span class="preview-tag">${t.trim()}</span>`).join('');
+  } else {
+    tagsPreview.innerHTML = '<em>No tags</em>';
+  }
+
+  document.getElementById('previewCard').style.display = 'block';
+
+  // Live body preview update
+  document.getElementById('genBody').addEventListener('input', function() {
+    document.getElementById('descPreview').innerHTML = this.value;
+  });
+  document.getElementById('genTags').addEventListener('input', function() {
+    const t = this.value;
+    if (t) {
+      document.getElementById('tagsPreview').innerHTML = t.split(',').map(s => `<span class="preview-tag">${s.trim()}</span>`).join('');
+    }
+  });
+}
+
+// ── PUBLISH TO SHOPIFY ──
+async function publishToShopify(asDraft = false) {
+  await doPublish(asDraft ? 'draft' : 'active');
+}
+
+async function publishAsDraft() {
+  await doPublish('draft');
+}
+
+async function doPublish(status) {
+  clearAlert('publishAlert');
+
+  if (state.demoMode || !state.connected) {
+    simulateDemoPublish(status);
+    return;
+  }
+
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Publishing…';
+
+  const title = document.getElementById('genTitle').value;
+  const body_html = document.getElementById('genBody').value;
+  const price = document.getElementById('genPrice').value;
+  const comparePrice = document.getElementById('genComparePrice').value;
+  const productType = document.getElementById('genProductType').value;
+  const vendor = document.getElementById('genVendor').value;
+  const tags = document.getElementById('genTags').value;
+  const metaTitle = document.getElementById('genMetaTitle').value;
+  const metaDesc = document.getElementById('genMetaDesc').value;
+
+  // Build variants
+  const variantData = state.generatedData?.variants || [];
+  const variants = variantData.length > 0
+    ? variantData.map(v => ({ option1: v, price: price || '0.00' }))
+    : [{ price: price || '0.00' }];
+
+  const productPayload = {
+    product: {
+      title,
+      body_html,
+      vendor: vendor || undefined,
+      product_type: productType || undefined,
+      tags,
+      status,
+      variants,
+      metafields: [
+        { key: 'title_tag', value: metaTitle, type: 'single_line_text_field', namespace: 'global' },
+        { key: 'description_tag', value: metaDesc, type: 'single_line_text_field', namespace: 'global' }
+      ]
+    }
+  };
+
+  if (comparePrice) {
+    productPayload.product.variants.forEach(v => { v.compare_at_price = comparePrice; });
+  }
+
+  try {
+    const resp = await shopifyFetch(`products.json`, {
+      method: 'POST',
+      body: JSON.stringify(productPayload)
+    });
+
+    const data = await resp.json();
+
+    if (resp.ok && data.product) {
+      const p = data.product;
+      addPublishedProduct(p.title, p.id, status, state.shopDomain);
+      showSuccessModal(p, state.shopDomain);
+    } else {
+      const errMsg = JSON.stringify(data.errors || data);
+      showAlert('publishAlert', 'error', `Shopify error: ${errMsg}`);
+    }
+  } catch(err) {
+    showAlert('publishAlert', 'error', `Publish failed: ${err.message}`);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 &nbsp;Publish to Shopify';
+}
+
+function simulateDemoPublish(status) {
+  const title = document.getElementById('genTitle').value;
+  const fakeId = Math.floor(Math.random() * 9000000000) + 1000000000;
+  addPublishedProduct(title, fakeId, status, 'demo-store');
+
+  document.getElementById('successModalBody').innerHTML =
+    `<strong>${title}</strong> has been prepared as a ${status} product.<br/><br/><em>Demo Mode — connect a real Shopify store to publish.</em>`;
+  document.getElementById('successModalLink').innerHTML = '';
+  document.getElementById('successModal').classList.add('open');
+}
+
+function addPublishedProduct(title, id, status, domain) {
+  state.publishedProducts.push({ title, id, status, domain });
+  const list = document.getElementById('publishedList');
+  const row = document.createElement('div');
+  row.className = 'product-row fade-in';
+  row.innerHTML = `
+    <div class="product-row-info">
+      <div class="product-row-title">${title}</div>
+      <div class="product-row-meta">
+        <span>ID: ${id}</span>
+        <span class="status-badge ${status === 'active' ? 'done' : 'pending'}" style="padding:2px 8px; font-size:0.75rem;">
+          <div class="status-dot"></div>${status}
+        </span>
+      </div>
+    </div>
+    <div class="product-row-actions">
+      ${domain !== 'demo-store' ? `<a href="https://${domain}.myshopify.com/admin/products/${id}" target="_blank" class="btn btn-success btn-sm">View →</a>` : ''}
+    </div>
+  `;
+  list.appendChild(row);
+  document.getElementById('publishedCard').style.display = 'block';
+}
+
+function showSuccessModal(product, domain) {
+  document.getElementById('successModalBody').innerHTML =
+    `<strong>${product.title}</strong> has been published to your Shopify store as <strong>${product.status}</strong>.`;
+  document.getElementById('successModalLink').innerHTML =
+    `<a href="https://${domain}.myshopify.com/admin/products/${product.id}" target="_blank" class="btn btn-success btn-sm" style="margin-top:8px;">
+      View in Shopify Admin →
+    </a>`;
+  document.getElementById('successModal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function addAnotherProduct() {
+  goToStep(2);
+  // Clear manual fields
+  ['productName','productType','productVendor','targetAudience','productFeatures',
+   'productPrice','comparePrice','productVariants','productTags','additionalContext'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  clearAlert('generationAlert');
+  clearAlert('publishAlert');
+  state.generatedData = null;
+}
+
+async function regenerate() {
+  const input = state._lastInput;
+  if (!input) { goToStep(2); return; }
+  goToStep(3);
+  document.getElementById('genLog').innerHTML = '<span class="log-line info">» Regenerating with different variation…</span>';
+  await runGeneration(input);
+}
+
+// patch generate to save input
+const _orig = window.generateWithAI;
+window.generateWithAI = async function() {
+  const tab = state.currentTab;
+  state.currentTab = tab;
+  const input = collectInput();
+  if (!input) return;
+  state._lastInput = input;
+
+  const anthropicKey = state.anthropicKey || document.getElementById('anthropicKey').value.trim();
+  if (!anthropicKey) {
+    alert('Please enter your Anthropic API key in the Connect step, or type it in the field below.');
+    const k = prompt('Enter your Anthropic API key:');
+    if (!k) return;
+    state.anthropicKey = k;
+  } else {
+    state.anthropicKey = anthropicKey;
+  }
+
+  goToStep(3);
+  await runGeneration(input);
+};
+
+// ── HELPERS ──
+function showAlert(containerId, type, msg) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const icons = { success:'✓', error:'✗', warn:'⚠️', info:'ℹ️' };
+  el.innerHTML = `<div class="alert alert-${type === 'warn' ? 'warn' : type === 'info' ? 'info' : type === 'success' ? 'success' : 'error'}">
+    ${icons[type] || ''} &nbsp;${msg}
+  </div>`;
+}
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = '';
+}
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── CLOSE MODAL ON BACKDROP ──
+document.getElementById('successModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('successModal');
+});
+</script>
+</body>
+</html>

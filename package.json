@@ -1,0 +1,16 @@
+{
+  "name": "storemagic-server",
+  "version": "1.0.0",
+  "description": "StoreMagic — AI Shopify Product Generator (proxy server)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "keywords": ["shopify", "storemagic", "proxy"],
+  "license": "MIT"
+}
