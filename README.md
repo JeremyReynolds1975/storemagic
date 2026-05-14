@@ -1,0 +1,2 @@
+# storemagic
+storemagic
